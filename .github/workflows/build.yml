@@ -32,42 +32,33 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.buildozer
-          key: buildozer-apuntador-v3-${{ hashFiles('buildozer.spec') }}
-          restore-keys: buildozer-apuntador-v3-
+          key: buildozer-apuntador-v4-${{ hashFiles('buildozer.spec') }}
+          restore-keys: buildozer-apuntador-v4-
 
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: ~/.gradle
-          key: gradle-apuntador-v3-${{ hashFiles('buildozer.spec') }}
-          restore-keys: gradle-apuntador-v3-
+          key: gradle-apuntador-v4-${{ hashFiles('buildozer.spec') }}
+          restore-keys: gradle-apuntador-v4-
 
       - name: Instalar Android SDK y crear symlinks
         run: |
           SDK_ROOT=~/.buildozer/android/platform/android-sdk
           mkdir -p $SDK_ROOT/cmdline-tools
-
-          # Descargar cmdline-tools
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q commandlinetools-linux-9477386_latest.zip -d cmdline-tmp
           mv cmdline-tmp/cmdline-tools $SDK_ROOT/cmdline-tools/latest
           rm -rf cmdline-tmp commandlinetools-linux-9477386_latest.zip
-
           export PATH=$PATH:$SDK_ROOT/cmdline-tools/latest/bin:$SDK_ROOT/platform-tools
-
-          # Aceptar licencias e instalar
           yes | sdkmanager --sdk_root=$SDK_ROOT --licenses || true
           sdkmanager --sdk_root=$SDK_ROOT \
             "platforms;android-33" \
             "build-tools;33.0.2" \
             "platform-tools"
-
-          # Crear symlink tools/bin -> cmdline-tools/latest/bin
-          # para que Buildozer encuentre sdkmanager en la ruta vieja
           mkdir -p $SDK_ROOT/tools/bin
           ln -sf $SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $SDK_ROOT/tools/bin/sdkmanager
           ln -sf $SDK_ROOT/cmdline-tools/latest/bin/avdmanager $SDK_ROOT/tools/bin/avdmanager
-
           echo "SDK instalado correctamente"
           ls $SDK_ROOT/build-tools/
 
@@ -77,6 +68,8 @@ jobs:
           rm -rf .buildozer/android/platform/build-arm64-v8a/build/other_builds/hostpython3
 
       - name: Build APK
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2g"
         run: |
           set -o pipefail
           buildozer android debug 2>&1 | tee build_output.log
