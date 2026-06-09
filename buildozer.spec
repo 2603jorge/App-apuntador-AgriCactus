@@ -17,6 +17,8 @@ android.archs = arm64-v8a
 android.allow_backup = True
 android.build_tools_version = 33.0.2
 android.gradle_dependencies = androidx.core:core:1.9.0
+android.enable_androidx = True
+p4a.branch = develop
 
 [buildozer]
 log_level = 2
