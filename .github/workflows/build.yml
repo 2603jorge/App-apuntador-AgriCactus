@@ -47,6 +47,24 @@ jobs:
           rm -rf .buildozer/android/platform/build-arm64-v8a/dists
           rm -rf .buildozer/android/platform/build-arm64-v8a/build/other_builds/hostpython3
 
+      - name: Aceptar licencias Android SDK
+        run: |
+          if [ -f "$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+            $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+              "build-tools;33.0.2" \
+              "platforms;android-33" \
+              "platform-tools" || true
+          elif [ -f "$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager" ]; then
+            yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses || true
+            $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager \
+              "build-tools;33.0.2" \
+              "platforms;android-33" \
+              "platform-tools" || true
+          else
+            echo "sdkmanager no encontrado aun, buildozer lo descargara"
+          fi
+
       - name: Build APK
         run: |
           set -o pipefail
@@ -74,7 +92,7 @@ jobs:
         if: success()
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
+          tag_name: v${{ github.run_number }}-apuntador
           name: "AgriCactus Apuntador v${{ github.run_number }}"
           files: bin/*.apk
         env:
