@@ -1,6 +1,6 @@
 # =============================================================================
 #  AgriCactus - App del APUNTADOR  (main.py)
-#  v2.1 - Auto-validacion puestos fijos + reporte separado
+#  v2.2 - Fix recepcion broadcast (multicast lock)
 # =============================================================================
 
 import datetime
@@ -609,13 +609,41 @@ class ApuntadorAgriCactusApp(MDApp):
     listas_recibidas        = {}
     _escucha_activa         = False
     _recepcion_activa       = False
+    _multicast_lock         = None
+    _lock_intentado         = False
 
     def build(self):
         self.theme_cls.theme_style     = "Light"
         self.theme_cls.primary_palette = "Green"
         controlador = Builder.load_string(KV)
+        self._adquirir_multicast_lock()
         Clock.schedule_once(self._iniciar_servicios, 1.0)
         return controlador
+
+    # ── Fix de recepcion: el anuncio "CUADRILLERO:..." llega por UDP ─────────
+    # broadcast (255.255.255.255). En Android, recibir broadcast por WiFi
+    # requiere un multicast lock o el sistema lo descarta en silencio. Sin
+    # esto, el Apuntador nunca se entera de la IP del cuadrillero y por lo
+    # tanto tampoco puede pedirle el avance ("jalar" la info).
+    def _adquirir_multicast_lock(self):
+        if self._lock_intentado:
+            return
+        self._lock_intentado = True
+        if platform != 'android':
+            return
+        try:
+            from jnius import autoclass, cast
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            Context        = autoclass('android.content.Context')
+            activity       = PythonActivity.mActivity
+            wifi_manager   = activity.getSystemService(Context.WIFI_SERVICE)
+            wifi_manager   = cast('android.net.wifi.WifiManager', wifi_manager)
+            self._multicast_lock = wifi_manager.createMulticastLock("agricactus_apuntador")
+            self._multicast_lock.setReferenceCounted(True)
+            self._multicast_lock.acquire()
+            print("[WIFI] Multicast lock adquirido correctamente.")
+        except Exception as e:
+            print(f"[WIFI] No se pudo adquirir multicast lock: {e}")
 
     def _iniciar_servicios(self, dt):
         self.iniciar_escucha_cuadrilleros()
@@ -633,6 +661,7 @@ class ApuntadorAgriCactusApp(MDApp):
         if self._escucha_activa:
             return
         self._escucha_activa = True
+        self._adquirir_multicast_lock()
 
         def _escuchar():
             try:
@@ -795,6 +824,11 @@ class ApuntadorAgriCactusApp(MDApp):
     def on_stop(self):
         self._escucha_activa   = False
         self._recepcion_activa = False
+        if self._multicast_lock is not None:
+            try:
+                self._multicast_lock.release()
+            except Exception:
+                pass
 
 
 if __name__ == '__main__':
