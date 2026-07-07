@@ -616,9 +616,38 @@ class ApuntadorAgriCactusApp(MDApp):
         self.theme_cls.theme_style     = "Light"
         self.theme_cls.primary_palette = "Green"
         controlador = Builder.load_string(KV)
+        self._solicitar_permisos()
         self._adquirir_multicast_lock()
         Clock.schedule_once(self._iniciar_servicios, 1.0)
         return controlador
+
+    # ── Solicitud activa de permisos ──────────────────────────────────────────
+    # Sin esto, Android nunca muestra el dialogo de permisos y en telefonos
+    # recientes (Samsung con "configuracion restringida") es casi imposible
+    # otorgarlos a mano desde Ajustes.
+    def _solicitar_permisos(self):
+        if platform != 'android':
+            return
+        try:
+            from android.permissions import request_permissions, Permission
+            permisos = [
+                Permission.ACCESS_FINE_LOCATION,
+                Permission.ACCESS_COARSE_LOCATION,
+                Permission.ACCESS_WIFI_STATE,
+                Permission.CHANGE_WIFI_MULTICAST_STATE,
+                Permission.WRITE_EXTERNAL_STORAGE,
+                Permission.READ_EXTERNAL_STORAGE,
+            ]
+            try:
+                permisos.append(Permission.NEARBY_WIFI_DEVICES)  # Android 13+
+            except AttributeError:
+                pass
+            request_permissions(permisos, self._al_resultado_permisos)
+        except Exception as e:
+            print(f"[PERMISOS] Error solicitando permisos: {e}")
+
+    def _al_resultado_permisos(self, permisos, resultados):
+        print(f"[PERMISOS] Resultado: {dict(zip(permisos, resultados))}")
 
     # ── Fix de recepcion: el anuncio "CUADRILLERO:..." llega por UDP ─────────
     # broadcast (255.255.255.255). En Android, recibir broadcast por WiFi
@@ -833,3 +862,4 @@ class ApuntadorAgriCactusApp(MDApp):
 
 if __name__ == '__main__':
     ApuntadorAgriCactusApp().run()
+
