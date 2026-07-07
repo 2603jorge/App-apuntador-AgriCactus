@@ -167,6 +167,72 @@ def _carpeta_salida() -> str:
     return os.path.expanduser("~")
 
 
+MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+MIME_CSV  = "text/csv"
+
+
+def compartir_archivo_android(ruta: str, mime: str):
+    """
+    Abre el selector nativo de Android ('Compartir con...') para mandar el
+    archivo por WhatsApp, correo, Drive, etc. Usa FileProvider (necesario
+    desde Android 7+) via androidx.core, que ya viene declarado en el build
+    por defecto de python-for-android.
+    """
+    if platform != 'android':
+        Snackbar(text="Compartir solo funciona en el dispositivo Android").open()
+        return
+    try:
+        from jnius import autoclass, cast
+        PythonActivity = autoclass('org.kivy.android.PythonActivity')
+        File           = autoclass('java.io.File')
+        Intent         = autoclass('android.content.Intent')
+        FileProvider   = autoclass('androidx.core.content.FileProvider')
+
+        activity  = PythonActivity.mActivity
+        file_obj  = File(ruta)
+        authority = activity.getPackageName() + ".fileprovider"
+        uri       = FileProvider.getUriForFile(activity, authority, file_obj)
+
+        intent = Intent(Intent.ACTION_SEND)
+        intent.setType(mime)
+        intent.putExtra(Intent.EXTRA_STREAM, cast('android.os.Parcelable', uri))
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+        chooser = Intent.createChooser(intent, "Compartir archivo")
+        activity.startActivity(chooser)
+    except Exception as e:
+        print(f"[COMPARTIR] Error: {e}")
+        Snackbar(text=f"No se pudo abrir compartir: {e}").open()
+
+
+def mostrar_dialogo_compartir(etiqueta: str, ruta: str):
+    mime = MIME_XLSX if ruta.lower().endswith(".xlsx") else MIME_CSV
+    nombre_archivo = os.path.basename(ruta)
+
+    dialog_holder = {}
+
+    def _cerrar(*_):
+        dialog_holder["dlg"].dismiss()
+
+    def _compartir(*_):
+        dialog_holder["dlg"].dismiss()
+        compartir_archivo_android(ruta, mime)
+
+    dlg = MDDialog(
+        title=f"{etiqueta} generado",
+        text=f"{nombre_archivo}\n\n¿Quieres compartirlo ahora (WhatsApp, correo, Drive)?",
+        buttons=[
+            MDFlatButton(text="CERRAR", on_release=_cerrar),
+            MDRaisedButton(
+                text="COMPARTIR", md_bg_color=(0.18, 0.29, 0.12, 1),
+                on_release=_compartir
+            ),
+        ],
+    )
+    dialog_holder["dlg"] = dlg
+    dlg.open()
+
+
 def exportar_xlsx(listas: list, tipo: str = "avance") -> str:
     """
     Genera un archivo .xlsx real (no texto), con dos hojas: Puestos Fijos
@@ -845,7 +911,7 @@ class PantallaInicio(Screen):
             etiqueta = "CSV (Excel no disponible en este build)"
         if ruta:
             guardar_listas(listas)
-            Snackbar(text=f"{etiqueta}: {os.path.basename(ruta)}").open()
+            mostrar_dialogo_compartir(etiqueta, ruta)
         else:
             Snackbar(text="Error al exportar").open()
 
@@ -866,7 +932,7 @@ class PantallaInicio(Screen):
             etiqueta = "Reporte final (CSV, Excel no disponible)"
         if ruta:
             guardar_listas(list(app.listas_recibidas.values()))
-            Snackbar(text=f"{etiqueta}: {os.path.basename(ruta)}").open()
+            mostrar_dialogo_compartir(etiqueta, ruta)
         else:
             Snackbar(text="Error al exportar").open()
 
