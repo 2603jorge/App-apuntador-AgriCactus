@@ -24,6 +24,10 @@ from kivy.utils import platform
 from kivymd.app import MDApp
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.list import TwoLineIconListItem, IconLeftWidget
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton, MDRaisedButton
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.textfield import MDTextField
 
 ARCHIVO_LISTAS     = "apuntador_listas.json"
 PUERTO_ANUNCIO_CU  = 45682
@@ -33,6 +37,7 @@ PUERTO_APUNTADOR   = 45683   # Auto-validacion puestos fijos
 PUERTO_CONSULTA_EMP     = 45690  # Consulta de empleado por credencial (empleados_server.py)
 TIMEOUT_CONSULTA_EMP    = 3.0
 REINTENTOS_CONSULTA_EMP = 3
+PIN_RH = "RH2024"  # Mismo PIN que usan Trabajador y Cuadrillero
 
 
 def guardar_listas(listas: list):
@@ -865,7 +870,47 @@ class PantallaInicio(Screen):
         else:
             Snackbar(text="Error al exportar").open()
 
+    _dialog_limpiar = None
+
     def limpiar_dia(self):
+        """Pide PIN de RH antes de borrar todo, para evitar toques accidentales."""
+        campo_pin = MDTextField(
+            hint_text="PIN de RH",
+            password=True,
+            line_color_focus=(0.18, 0.29, 0.12, 1),
+        )
+        contenedor = MDBoxLayout(
+            orientation="vertical", spacing="8dp",
+            size_hint_y=None, height="60dp"
+        )
+        contenedor.add_widget(campo_pin)
+
+        def _cerrar(*_):
+            self._dialog_limpiar.dismiss()
+
+        def _confirmar(*_):
+            if campo_pin.text.strip() != PIN_RH:
+                Snackbar(text="PIN incorrecto — no se borró nada").open()
+                return
+            self._dialog_limpiar.dismiss()
+            self._limpiar_dia_real()
+
+        self._dialog_limpiar = MDDialog(
+            title="⚠ Esto borra TODO lo del día",
+            text="Cuadrilleros detectados, listas y avances recibidos. Escribe el PIN de RH para confirmar.",
+            type="custom",
+            content_cls=contenedor,
+            buttons=[
+                MDFlatButton(text="CANCELAR", on_release=_cerrar),
+                MDRaisedButton(
+                    text="BORRAR TODO", md_bg_color=(0.72, 0.10, 0.10, 1),
+                    on_release=_confirmar
+                ),
+            ],
+        )
+        self._dialog_limpiar.open()
+
+    def _limpiar_dia_real(self):
         app = MDApp.get_running_app()
         app.cuadrilleros_detectados = {}
         app.listas_recibidas        = {}
