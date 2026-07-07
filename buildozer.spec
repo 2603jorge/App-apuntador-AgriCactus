@@ -6,7 +6,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 version = 1.0
 
-requirements = python3,kivy,kivymd==1.1.1,plyer,pillow,android,pyjnius
+requirements = python3,kivy,kivymd==1.1.1,plyer,pillow,android,pyjnius,openpyxl,et_xmlfile
 
 android.permissions = INTERNET,ACCESS_WIFI_STATE,CHANGE_WIFI_STATE,ACCESS_NETWORK_STATE,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_IMAGES
 
