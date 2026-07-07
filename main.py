@@ -403,7 +403,7 @@ ScreenManager:
         MDBoxLayout:
             orientation: 'horizontal'
             size_hint: (0.96, 0.065)
-            pos_hint: {'center_x': 0.5, 'top': 0.745}
+            pos_hint: {'center_x': 0.5, 'top': 0.74}
             spacing: '6dp'
 
             MDRaisedButton:
@@ -426,20 +426,19 @@ ScreenManager:
         # Autoservicio: checar credencial sin cuadrilla / sin celular del cuadrillero
         MDRectangleFlatIconButton:
             icon: "card-account-details"
-            text: "📇 AUTOSERVICIO — CHECAR POR CREDENCIAL"
+            text: "📇 AUTOSERVICIO"
             theme_text_color: "Custom"
             text_color: 0.18, 0.29, 0.12, 1
             line_color: 0.18, 0.29, 0.12, 1
-            pos_hint: {'center_x': 0.5, 'top': 0.678}
-            size_hint: (0.96, None)
-            height: '38dp'
-            font_size: '11sp'
+            pos_hint: {'center_x': 0.5, 'top': 0.66}
+            size_hint: (0.96, 0.055)
+            font_size: '12sp'
             on_release: app.root.current = 'autoservicio'
 
         # Lista cuadrilleros
         MDCard:
-            size_hint: (0.96, 0.375)
-            pos_hint: {'center_x': 0.5, 'top': 0.625}
+            size_hint: (0.96, 0.365)
+            pos_hint: {'center_x': 0.5, 'top': 0.59}
             elevation: 2
             radius: [10, 10, 10, 10]
             md_bg_color: 1, 1, 1, 1
@@ -1561,4 +1560,3 @@ class ApuntadorAgriCactusApp(MDApp):
 
 if __name__ == '__main__':
     ApuntadorAgriCactusApp().run()
-
