@@ -19,7 +19,7 @@ android.build_tools_version = 33.0.2
 android.gradle_dependencies = androidx.core:core:1.9.0,com.journeyapps:zxing-android-embedded:4.3.0
 android.enable_androidx = True
 android.add_resources = file_paths.xml:xml/file_paths.xml
-android.extra_manifest_application_arguments = ./extra_manifest_application_arguments.xml
+p4a.hook = ./p4a_hook.py
 
 [buildozer]
 log_level = 2
