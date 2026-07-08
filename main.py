@@ -56,7 +56,10 @@ def cargar_listas() -> list:
             pass
     return []
 
+ULTIMO_ERROR_EXPORT = ""
+
 def exportar_csv(listas: list, tipo: str = "avance") -> str:
+    global ULTIMO_ERROR_EXPORT
     try:
         fecha_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         nombre    = f"agricactus_{tipo}_{fecha_str}.csv"
@@ -153,6 +156,7 @@ def exportar_csv(listas: list, tipo: str = "avance") -> str:
         return ruta
     except Exception as e:
         print(f"[CSV] Error: {e}")
+        ULTIMO_ERROR_EXPORT = f"{type(e).__name__}: {e}"
         return ""
 
 
@@ -220,7 +224,7 @@ def mostrar_dialogo_compartir(etiqueta: str, ruta: str):
 
     dlg = MDDialog(
         title=f"{etiqueta} generado",
-        text=f"{nombre_archivo}\n\n¿Quieres compartirlo ahora (WhatsApp, correo, Drive)?",
+        text=f"Guardado en:\n{ruta}\n\n¿Quieres compartirlo ahora (WhatsApp, correo, Drive)?",
         buttons=[
             MDFlatButton(text="CERRAR", on_release=_cerrar),
             MDRaisedButton(
@@ -239,8 +243,10 @@ def exportar_xlsx(listas: list, tipo: str = "avance") -> str:
     y Jornaleros, y lo guarda en el almacenamiento local del dispositivo.
     Requiere la libreria openpyxl (agregala a buildozer.spec: ver nota).
     """
+    global ULTIMO_ERROR_EXPORT
     if not EXCEL_DISPONIBLE:
         print("[EXCEL] openpyxl no esta disponible en este build.")
+        ULTIMO_ERROR_EXPORT = "openpyxl no se pudo importar en este build (revisa requirements)"
         return ""
     try:
         fecha_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -341,6 +347,7 @@ def exportar_xlsx(listas: list, tipo: str = "avance") -> str:
         return ruta
     except Exception as e:
         print(f"[EXCEL] Error: {e}")
+        ULTIMO_ERROR_EXPORT = f"{type(e).__name__}: {e}"
         return ""
 
 
@@ -913,7 +920,7 @@ class PantallaInicio(Screen):
             guardar_listas(listas)
             mostrar_dialogo_compartir(etiqueta, ruta)
         else:
-            Snackbar(text="Error al exportar").open()
+            Snackbar(text=f"Error al exportar: {ULTIMO_ERROR_EXPORT or 'desconocido'}").open()
 
     def exportar_final(self):
         app     = MDApp.get_running_app()
@@ -934,7 +941,7 @@ class PantallaInicio(Screen):
             guardar_listas(list(app.listas_recibidas.values()))
             mostrar_dialogo_compartir(etiqueta, ruta)
         else:
-            Snackbar(text="Error al exportar").open()
+            Snackbar(text=f"Error al exportar: {ULTIMO_ERROR_EXPORT or 'desconocido'}").open()
 
     _dialog_limpiar = None
 
@@ -1671,3 +1678,5 @@ class ApuntadorAgriCactusApp(MDApp):
 
 if __name__ == '__main__':
     ApuntadorAgriCactusApp().run()
+
+
