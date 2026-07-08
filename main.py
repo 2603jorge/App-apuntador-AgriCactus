@@ -191,6 +191,7 @@ def compartir_archivo_android(ruta: str, mime: str):
         File           = autoclass('java.io.File')
         Intent         = autoclass('android.content.Intent')
         FileProvider   = autoclass('androidx.core.content.FileProvider')
+        JString        = autoclass('java.lang.String')
 
         activity  = PythonActivity.mActivity
         file_obj  = File(ruta)
@@ -202,7 +203,8 @@ def compartir_archivo_android(ruta: str, mime: str):
         intent.putExtra(Intent.EXTRA_STREAM, cast('android.os.Parcelable', uri))
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-        chooser = Intent.createChooser(intent, "Compartir archivo")
+        titulo  = cast('java.lang.CharSequence', JString("Compartir archivo"))
+        chooser = Intent.createChooser(intent, titulo)
         activity.startActivity(chooser)
     except Exception as e:
         print(f"[COMPARTIR] Error: {e}")
@@ -485,7 +487,7 @@ ScreenManager:
             spacing: '6dp'
 
             MDRaisedButton:
-                text: "📷 IMPORTAR PROGRAMACIÓN"
+                text: "IMPORTAR PROGRAMACIÓN"
                 md_bg_color: 0.96, 0.65, 0.14, 1
                 text_color: 0.12, 0.22, 0.08, 1
                 size_hint_x: 0.5
@@ -494,7 +496,7 @@ ScreenManager:
                 on_release: root.importar_programacion()
 
             MDRaisedButton:
-                text: "📋 VER PROGRAMACIÓN"
+                text: "VER PROGRAMACIÓN"
                 md_bg_color: 0.18, 0.29, 0.55, 1
                 size_hint_x: 0.5
                 font_size: '11sp'
@@ -504,7 +506,7 @@ ScreenManager:
         # Autoservicio: checar credencial sin cuadrilla / sin celular del cuadrillero
         MDRectangleFlatIconButton:
             icon: "card-account-details"
-            text: "📇 AUTOSERVICIO"
+            text: "AUTOSERVICIO"
             theme_text_color: "Custom"
             text_color: 0.18, 0.29, 0.12, 1
             line_color: 0.18, 0.29, 0.12, 1
@@ -717,7 +719,7 @@ ScreenManager:
             spacing: '6dp'
 
             MDRaisedButton:
-                text: "🔄 ACTUALIZAR"
+                text: "ACTUALIZAR"
                 md_bg_color: 0.18, 0.29, 0.12, 1
                 size_hint_x: 0.5
                 elevation: 3
@@ -777,7 +779,7 @@ ScreenManager:
             size_hint: (0.9, 0.12)
 
         MDRaisedButton:
-            text: "📷 ESCANEAR CREDENCIAL"
+            text: "ESCANEAR CREDENCIAL"
             md_bg_color: 0.18, 0.42, 0.18, 1
             pos_hint: {'center_x': 0.5, 'top': 0.68}
             size_hint: (0.9, 0.09)
@@ -969,7 +971,7 @@ class PantallaInicio(Screen):
             self._limpiar_dia_real()
 
         self._dialog_limpiar = MDDialog(
-            title="⚠ Esto borra TODO lo del día",
+            title="Esto borra TODO lo del día",
             text="Cuadrilleros detectados, listas y avances recibidos. Escribe el PIN de RH para confirmar.",
             type="custom",
             content_cls=contenedor,
@@ -1608,7 +1610,7 @@ class ApuntadorAgriCactusApp(MDApp):
         if credencial in lista_auto["trabajadores"]:
             info_previa = lista_auto["trabajadores"][credencial]
             pa.ids.label_resultado_auto.text = (
-                f"⚠ {info_previa.get('nombre','')} ya se registró hoy "
+                f"Aviso: {info_previa.get('nombre','')} ya se registró hoy "
                 f"a las {info_previa.get('hora_deteccion','')}"
             )
             pa.ids.label_resultado_auto.text_color = (0.7, 0.2, 0.15, 1)
@@ -1651,7 +1653,7 @@ class ApuntadorAgriCactusApp(MDApp):
             self._actualizar_ui()
 
             pa.ids.label_resultado_auto.text = (
-                f"✓ {nombre}\n"
+                f"Registrado: {nombre}\n"
                 f"{puesto_desc if puesto_desc else 'Sin actividad fija'}"
                 f"{('  ·  Cuadrilla ' + cuadrilla) if cuadrilla else ''}\n"
                 f"Registrado a las {ahora}"
@@ -1678,5 +1680,3 @@ class ApuntadorAgriCactusApp(MDApp):
 
 if __name__ == '__main__':
     ApuntadorAgriCactusApp().run()
-
-
