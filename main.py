@@ -4,6 +4,7 @@
 # =============================================================================
 
 import datetime
+import traceback
 import json
 import os
 import socket
@@ -17,6 +18,7 @@ except Exception:
     EXCEL_DISPONIBLE = False
 
 from kivy.lang import Builder
+from kivy.base import ExceptionHandler, ExceptionManager
 from kivy.clock import Clock
 from kivy.properties import StringProperty, ListProperty
 from kivy.uix.screenmanager import Screen, FadeTransition
@@ -352,6 +354,24 @@ def exportar_xlsx(listas: list, tipo: str = "avance") -> str:
         ULTIMO_ERROR_EXPORT = f"{type(e).__name__}: {e}"
         return ""
 
+
+
+# =============================================================================
+#  MANEJADOR DE ERRORES -- registra cualquier fallo inesperado en un archivo
+#  local (crash_log.txt) para poder diagnosticar problemas en telefonos
+#  especificos sin necesitar computadora ni logs de GitHub Actions.
+# =============================================================================
+class ManejadorErrores(ExceptionHandler):
+    def handle_exception(self, inst):
+        try:
+            with open('crash_log.txt', 'a', encoding='utf-8') as f:
+                f.write(f"\n{'='*60}\n{datetime.datetime.now().isoformat()}\n")
+                f.write(''.join(traceback.format_exception(type(inst), inst, inst.__traceback__)))
+        except Exception:
+            pass
+        return ExceptionManager.PASS
+
+ExceptionManager.add_handler(ManejadorErrores())
 
 KV = '''
 #:import FadeTransition kivy.uix.screenmanager.FadeTransition
