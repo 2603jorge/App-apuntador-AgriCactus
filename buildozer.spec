@@ -12,7 +12,7 @@ android.permissions = INTERNET,ACCESS_WIFI_STATE,CHANGE_WIFI_STATE,ACCESS_NETWOR
 
 android.api = 33
 android.minapi = 21
-android.ndk = 25b
+android.ndk = 28c
 android.archs = arm64-v8a
 android.allow_backup = True
 android.build_tools_version = 33.0.2
